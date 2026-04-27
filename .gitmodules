@@ -1,0 +1,9 @@
+[submodule "stm32g0xx-hal-driver"]
+	path = stm32g0xx-hal-driver
+	url = https://github.com/STMicroelectronics/stm32g0xx-hal-driver.git
+[submodule "cmsis-device-g0"]
+	path = cmsis-device-g0
+	url = https://github.com/STMicroelectronics/cmsis-device-g0.git
+[submodule "cmsis-core"]
+	path = cmsis-core
+	url = https://github.com/STMicroelectronics/cmsis-core.git
