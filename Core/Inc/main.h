@@ -57,7 +57,32 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-
+#define CH347_RST_Pin GPIO_PIN_2
+#define CH347_RST_GPIO_Port GPIOA
+#define LIN1_WAKE_Pin GPIO_PIN_3
+#define LIN1_WAKE_GPIO_Port GPIOA
+#define LIN1_SLP_Pin GPIO_PIN_6
+#define LIN1_SLP_GPIO_Port GPIOA
+#define LIN2_WAKE_Pin GPIO_PIN_7
+#define LIN2_WAKE_GPIO_Port GPIOA
+#define LIN2_SLP_Pin GPIO_PIN_1
+#define LIN2_SLP_GPIO_Port GPIOB
+#define LIN2_VBAT_EN_Pin GPIO_PIN_8
+#define LIN2_VBAT_EN_GPIO_Port GPIOA
+#define LIN2_MASTER_Pin GPIO_PIN_9
+#define LIN2_MASTER_GPIO_Port GPIOA
+#define LIN1_MASTER_Pin GPIO_PIN_6
+#define LIN1_MASTER_GPIO_Port GPIOC
+#define CAN2_RES_Pin GPIO_PIN_10
+#define CAN2_RES_GPIO_Port GPIOA
+#define CAN1_S_Pin GPIO_PIN_11
+#define CAN1_S_GPIO_Port GPIOA
+#define CAN1_RES_Pin GPIO_PIN_12
+#define CAN1_RES_GPIO_Port GPIOA
+#define LIN1_VBAT_EN_Pin GPIO_PIN_15
+#define LIN1_VBAT_EN_GPIO_Port GPIOA
+#define CAN2_S_Pin GPIO_PIN_7
+#define CAN2_S_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

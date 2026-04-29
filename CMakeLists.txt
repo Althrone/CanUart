@@ -48,9 +48,7 @@ endif ()
 #添加宏定义
 add_definitions(
     -DSTM32G0B1xx
-    -DUSE_HAL_DRIVER
-    -DHAL_FDCAN_MODULE_ENABLED
-    -DHAL_UART_MODULE_ENABLED)
+    -DUSE_HAL_DRIVER)
 
 # 获取当前目录下所有 add_definitions 添加的宏（已自动去掉 -D 前缀）
 get_directory_property(GLOBAL_DEFS COMPILE_DEFINITIONS)
@@ -80,19 +78,19 @@ configure_file(
 #添加头文件路径，即.h文件
 include_directories(
     ./stm32g0xx-hal-driver/Inc
-    ./Templates/Inc
+    ./Core/Inc
     ./cmsis-device-g0/Include
     ./cmsis-core/CMSIS/Core/Include)
 #添加源文件路径,即.c或者.s文件
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
     ./stm32g0xx-hal-driver/Src/*.c
-    ./Templates/Src/*.c
     ./Core/Src/*.c
-    ./Templates/STM32CubeIDE/*.s)
+    ./cmsis-device-g0/Source/Templates/system_stm32g0xx.c
+    ./cmsis-device-g0/Source/Templates/gcc/startup_${STM32_CHIP}.s)
 
 list(FILTER SOURCES EXCLUDE REGEX ".*_template\.c$")
 
-#添加你的STM32F103ZETx_FLASH.ld的连接脚本路径
+#添加连接脚本路径
 set(LINKER_SCRIPT ${CMAKE_SOURCE_DIR}/Templates/STM32CubeIDE/STM32G0B1KBTx_FLASH.ld)
 
 add_link_options(-Wl,-gc-sections,--print-memory-usage,-Map=${PROJECT_BINARY_DIR}/${PROJECT_NAME}.map)

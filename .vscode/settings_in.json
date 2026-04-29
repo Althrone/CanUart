@@ -1,12 +1,12 @@
 {
     "search.exclude": {
-    //     "**/stm32g0*.h": true,
-    //     "@STM32_CHIP@.h": false,
-    //     "**/stm32g0*.c": true,
-    //     "@STM32_CHIP@.c": false
+        "cmsis-device-g0/Source/Templates/arm": true,
+        "cmsis-device-g0/Source/Templates/iar": true,
     },
     "files.exclude": {
-        // "cmsis-device-g0/Include/@STM32_CHIP@*.h": true,
-        // "cmsis-device-g0/Include/stm32g0xx.h": false
+        "cmsis-device-g0/Source/Templates/arm": true,
+        "cmsis-device-g0/Source/Templates/iar": true,
+        // "cmsis-device-g0/Source/Templates/gcc/startup_stm32g0*": true,
+        // "cmsis-device-g0/Source/Templates/gcc/startup_stm32g0b1xx.s": false,
     }
 }
