@@ -87,7 +87,7 @@ include_directories(
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
     ./stm32g0xx-hal-driver/Src/*.c
     ./Templates/Src/*.c
-    ./Templates/STM32CubeIDE/*.c
+    ./Core/Src/*.c
     ./Templates/STM32CubeIDE/*.s)
 
 list(FILTER SOURCES EXCLUDE REGEX ".*_template\.c$")

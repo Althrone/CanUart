@@ -131,10 +131,10 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = RCC_PLLM_DIV1;           //8MHz/1=8MHz
-  RCC_OscInitStruct.PLL.PLLN = 8;                       //8MHz*8=64MHz
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;           //64MHz/2=32MHz
-  RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;           //64MHz/2=32MHz
-  RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;           //64MHz/2=32MHz
+  RCC_OscInitStruct.PLL.PLLN = 12;                      //8MHz*12=96MHz
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV3;           //96MHz/3=32MHz
+  RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV3;           //96MHz/3=32MHz
+  RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV3;           //96MHz/3=32MHz
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     Error_Handler();
