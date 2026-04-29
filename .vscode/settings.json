@@ -1,0 +1,12 @@
+{
+    "search.exclude": {
+    //     "**/stm32g0*.h": true,
+    //     "stm32g0b1xx.h": false,
+    //     "**/stm32g0*.c": true,
+    //     "stm32g0b1xx.c": false
+    },
+    "files.exclude": {
+        // "cmsis-device-g0/Include/stm32g0b1xx*.h": true,
+        // "cmsis-device-g0/Include/stm32g0xx.h": false
+    }
+}

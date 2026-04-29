@@ -14,7 +14,7 @@ set(SIZE arm-none-eabi-size)
 set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
 
 # project settings
-project(Project  C CXX ASM)
+project(CanUart  C CXX ASM)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_C_STANDARD 11)
 
@@ -46,10 +46,36 @@ else ()
 endif ()
 
 #添加宏定义
-add_definitions(-DUSE_HAL_DRIVER -DSTM32G0B1xx 
-    -DHAL_RTC_MODULE_ENABLED
-    -DHAL_TIM_MODULE_ENABLED
-    -DHAL_FDCAN_MODULE_ENABLED)
+add_definitions(
+    -DSTM32G0B1xx
+    -DUSE_HAL_DRIVER
+    -DHAL_FDCAN_MODULE_ENABLED
+    -DHAL_UART_MODULE_ENABLED)
+
+# 获取当前目录下所有 add_definitions 添加的宏（已自动去掉 -D 前缀）
+get_directory_property(GLOBAL_DEFS COMPILE_DEFINITIONS)
+set(STM32_CHIP "")
+
+foreach(def IN LISTS GLOBAL_DEFS)
+    # 匹配类似 STM32开头的模式（可调整正则以支持更多系列）
+    if(def MATCHES "^STM32[^_]*$")
+        string(TOLOWER "${def}" STM32_CHIP)   # 转为小写，匹配文件名
+        break()
+    endif()
+endforeach()
+
+if(STM32_CHIP)
+    message(STATUS "Detected STM32 chip: ${STM32_CHIP}")
+else()
+    message(FATAL_ERROR "No STM32 chip define found, VSCode settings will not be customized")
+endif()
+
+# 自动生成 VSCode 设置文件
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/.vscode/settings_in.json
+    ${CMAKE_CURRENT_SOURCE_DIR}/.vscode/settings.json
+    @ONLY
+)
 
 #添加头文件路径，即.h文件
 include_directories(
@@ -58,7 +84,12 @@ include_directories(
     ./cmsis-device-g0/Include
     ./cmsis-core/CMSIS/Core/Include)
 #添加源文件路径,即.c或者.s文件
-file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS ./stm32g0xx-hal-driver/Src/*.c ./Templates/Src/*.c ./STM32CubeIDE/*.c ./STM32CubeIDE/*.s)
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
+    ./stm32g0xx-hal-driver/Src/*.c
+    ./Templates/Src/*.c
+    ./Templates/STM32CubeIDE/*.c
+    ./Templates/STM32CubeIDE/*.s)
+
 list(FILTER SOURCES EXCLUDE REGEX ".*_template\.c$")
 
 #添加你的STM32F103ZETx_FLASH.ld的连接脚本路径
@@ -83,3 +114,5 @@ add_custom_command(TARGET ${PROJECT_NAME}.elf POST_BUILD
         COMMAND ${CMAKE_OBJCOPY} -Obinary $<TARGET_FILE:${PROJECT_NAME}.elf> ${BIN_FILE}
         COMMENT "Building ${HEX_FILE}
 Building ${BIN_FILE}")
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

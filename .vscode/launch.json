@@ -1,0 +1,13 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Cortex Debug",
+            "cwd": "${workspaceFolder}",
+            "request": "launch",
+            "type": "cppdbg",
+            "program": "${workspaceFolder}/build/CanUart.elf",
+            "MIMode": "gdb",
+        }
+    ]
+}
