@@ -112,6 +112,55 @@ int main(void)
   MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
 
+  //复位CH347
+  HAL_GPIO_WritePin(CH347_RST_GPIO_Port, CH347_RST_Pin, GPIO_PIN_SET);
+
+  //打开can
+  //控制fdcan2的
+  HAL_GPIO_WritePin(CAN1_S_GPIO_Port, CAN1_S_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(CAN1_RES_GPIO_Port, CAN1_RES_Pin, GPIO_PIN_SET);
+
+  //控制fdcan1的
+  HAL_GPIO_WritePin(CAN2_S_GPIO_Port, CAN2_S_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(CAN2_RES_GPIO_Port, CAN2_RES_Pin, GPIO_PIN_SET);
+  // HAL_UART_Transmit(&huart4, "Hello World!\r\n", 14, 1000);
+    // HAL_UART_Transmit(&huart5, "Hello World5!\r\n", 15, 1000);
+  HAL_FDCAN_Start(&hfdcan1);
+  HAL_FDCAN_Start(&hfdcan2);
+
+  FDCAN_TxHeaderTypeDef TxHeader={
+    .Identifier = 0x123,
+    .IdType = FDCAN_STANDARD_ID,
+    .TxFrameType = FDCAN_DATA_FRAME,
+    .DataLength = FDCAN_DLC_BYTES_64,
+    .ErrorStateIndicator = FDCAN_ESI_ACTIVE,
+    .BitRateSwitch = FDCAN_BRS_ON,
+    .FDFormat = FDCAN_FD_CAN,
+    .TxEventFifoControl = FDCAN_NO_TX_EVENTS,
+    .MessageMarker = 0
+  };
+
+  
+
+  uint8_t TxData[] = {0x00,0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
+                      0x00,0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
+                      0x00,0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
+                      0x00,0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+  while(1)
+  {
+    // HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &TxHeader, TxData);
+    // HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &TxHeader, TxData);
+    // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET);
+    // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
+    // HAL_UART_Transmit(&huart3, "Hello World5!\r\n", 15, 1000);
+    HAL_Delay(100);
+    // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET);
+    // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
+    HAL_Delay(100);
+
+    // HAL_FDCAN_GetRxMessage(&hfdcan2, FDCAN_RX_FIFO0, &RxHeader, RxData);
+  // while (1);
+  }
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -191,13 +240,13 @@ static void MX_FDCAN1_Init(void)
   hfdcan1.Init.AutoRetransmission = DISABLE;
   hfdcan1.Init.TransmitPause = DISABLE;
   hfdcan1.Init.ProtocolException = DISABLE;
-  hfdcan1.Init.NominalPrescaler = 16;
+  hfdcan1.Init.NominalPrescaler = 8;
   hfdcan1.Init.NominalSyncJumpWidth = 1;
-  hfdcan1.Init.NominalTimeSeg1 = 2;
+  hfdcan1.Init.NominalTimeSeg1 = 5;
   hfdcan1.Init.NominalTimeSeg2 = 2;
-  hfdcan1.Init.DataPrescaler = 1;
+  hfdcan1.Init.DataPrescaler = 2;
   hfdcan1.Init.DataSyncJumpWidth = 1;
-  hfdcan1.Init.DataTimeSeg1 = 1;
+  hfdcan1.Init.DataTimeSeg1 = 6;
   hfdcan1.Init.DataTimeSeg2 = 1;
   hfdcan1.Init.StdFiltersNbr = 0;
   hfdcan1.Init.ExtFiltersNbr = 0;
@@ -207,6 +256,14 @@ static void MX_FDCAN1_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN FDCAN1_Init 2 */
+
+  HAL_FDCAN_ConfigGlobalFilter(&hfdcan1, FDCAN_ACCEPT_IN_RX_FIFO0, FDCAN_ACCEPT_IN_RX_FIFO1, FDCAN_FILTER_REMOTE, FDCAN_FILTER_REMOTE);
+
+  HAL_FDCAN_ConfigInterruptLines(&hfdcan1,FDCAN_IT_GROUP_RX_FIFO0,FDCAN_INTERRUPT_LINE0);
+  HAL_FDCAN_ConfigInterruptLines(&hfdcan1,FDCAN_IT_GROUP_RX_FIFO1,FDCAN_INTERRUPT_LINE1);
+  
+  HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE,0);
+  HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO1_NEW_MESSAGE,0);
 
   /* USER CODE END FDCAN1_Init 2 */
 
@@ -229,18 +286,18 @@ static void MX_FDCAN2_Init(void)
   /* USER CODE END FDCAN2_Init 1 */
   hfdcan2.Instance = FDCAN2;
   hfdcan2.Init.ClockDivider = FDCAN_CLOCK_DIV1;
-  hfdcan2.Init.FrameFormat = FDCAN_FRAME_CLASSIC;
+  hfdcan2.Init.FrameFormat = FDCAN_FRAME_FD_BRS;
   hfdcan2.Init.Mode = FDCAN_MODE_NORMAL;
   hfdcan2.Init.AutoRetransmission = DISABLE;
   hfdcan2.Init.TransmitPause = DISABLE;
   hfdcan2.Init.ProtocolException = DISABLE;
-  hfdcan2.Init.NominalPrescaler = 16;
+  hfdcan2.Init.NominalPrescaler = 8;
   hfdcan2.Init.NominalSyncJumpWidth = 1;
-  hfdcan2.Init.NominalTimeSeg1 = 2;
+  hfdcan2.Init.NominalTimeSeg1 = 5;
   hfdcan2.Init.NominalTimeSeg2 = 2;
-  hfdcan2.Init.DataPrescaler = 1;
+  hfdcan2.Init.DataPrescaler = 2;
   hfdcan2.Init.DataSyncJumpWidth = 1;
-  hfdcan2.Init.DataTimeSeg1 = 1;
+  hfdcan2.Init.DataTimeSeg1 = 6;
   hfdcan2.Init.DataTimeSeg2 = 1;
   hfdcan2.Init.StdFiltersNbr = 0;
   hfdcan2.Init.ExtFiltersNbr = 0;
@@ -250,6 +307,14 @@ static void MX_FDCAN2_Init(void)
     Error_Handler();
   }
   /* USER CODE BEGIN FDCAN2_Init 2 */
+
+  HAL_FDCAN_ConfigGlobalFilter(&hfdcan2, FDCAN_ACCEPT_IN_RX_FIFO0, FDCAN_ACCEPT_IN_RX_FIFO0, FDCAN_FILTER_REMOTE, FDCAN_FILTER_REMOTE);
+
+  HAL_FDCAN_ConfigInterruptLines(&hfdcan2,FDCAN_IT_GROUP_RX_FIFO0,FDCAN_INTERRUPT_LINE1);
+  HAL_FDCAN_ConfigInterruptLines(&hfdcan2,FDCAN_IT_GROUP_RX_FIFO1,FDCAN_INTERRUPT_LINE0);
+
+  HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO0_NEW_MESSAGE,0);
+  HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO1_NEW_MESSAGE,0);
 
   /* USER CODE END FDCAN2_Init 2 */
 
@@ -494,6 +559,207 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+#define FDCAN_ELEMENT_MASK_STDID ((uint32_t)0x1FFC0000U) /* Standard Identifier         */
+#define FDCAN_ELEMENT_MASK_EXTID ((uint32_t)0x1FFFFFFFU) /* Extended Identifier         */
+#define FDCAN_ELEMENT_MASK_RTR   ((uint32_t)0x20000000U) /* Remote Transmission Request */
+#define FDCAN_ELEMENT_MASK_XTD   ((uint32_t)0x40000000U) /* Extended Identifier         */
+#define FDCAN_ELEMENT_MASK_ESI   ((uint32_t)0x80000000U) /* Error State Indicator       */
+#define FDCAN_ELEMENT_MASK_TS    ((uint32_t)0x0000FFFFU) /* Timestamp                   */
+#define FDCAN_ELEMENT_MASK_DLC   ((uint32_t)0x000F0000U) /* Data Length Code            */
+#define FDCAN_ELEMENT_MASK_BRS   ((uint32_t)0x00100000U) /* Bit Rate Switch             */
+#define FDCAN_ELEMENT_MASK_FDF   ((uint32_t)0x00200000U) /* FD Format                   */
+#define FDCAN_ELEMENT_MASK_EFC   ((uint32_t)0x00800000U) /* Event FIFO Control          */
+#define FDCAN_ELEMENT_MASK_MM    ((uint32_t)0xFF000000U) /* Message Marker              */
+#define FDCAN_ELEMENT_MASK_FIDX  ((uint32_t)0x7F000000U) /* Filter Index                */
+#define FDCAN_ELEMENT_MASK_ANMF  ((uint32_t)0x80000000U) /* Accepted Non-matching Frame */
+#define FDCAN_ELEMENT_MASK_ET    ((uint32_t)0x00C00000U) /* Event type                  */
+
+#define SRAMCAN_FLS_NBR                  (28U)         /* Max. Filter List Standard Number      */
+#define SRAMCAN_FLE_NBR                  ( 8U)         /* Max. Filter List Extended Number      */
+#define SRAMCAN_RF0_NBR                  ( 3U)         /* RX FIFO 0 Elements Number             */
+#define SRAMCAN_RF1_NBR                  ( 3U)         /* RX FIFO 1 Elements Number             */
+#define SRAMCAN_TEF_NBR                  ( 3U)         /* TX Event FIFO Elements Number         */
+#define SRAMCAN_TFQ_NBR                  ( 3U)         /* TX FIFO/Queue Elements Number         */
+
+#define SRAMCAN_FLS_SIZE            ( 1U * 4U)         /* Filter Standard Element Size in bytes */
+#define SRAMCAN_FLE_SIZE            ( 2U * 4U)         /* Filter Extended Element Size in bytes */
+#define SRAMCAN_RF0_SIZE            (18U * 4U)         /* RX FIFO 0 Elements Size in bytes      */
+#define SRAMCAN_RF1_SIZE            (18U * 4U)         /* RX FIFO 1 Elements Size in bytes      */
+#define SRAMCAN_TEF_SIZE            ( 2U * 4U)         /* TX Event FIFO Elements Size in bytes  */
+#define SRAMCAN_TFQ_SIZE            (18U * 4U)         /* TX FIFO/Queue Elements Size in bytes  */
+
+#define SRAMCAN_FLSSA ((uint32_t)0)                                                      /* Filter List Standard Start
+                                                                                            Address                  */
+#define SRAMCAN_FLESA ((uint32_t)(SRAMCAN_FLSSA + (SRAMCAN_FLS_NBR * SRAMCAN_FLS_SIZE))) /* Filter List Extended Start
+                                                                                            Address                  */
+#define SRAMCAN_RF0SA ((uint32_t)(SRAMCAN_FLESA + (SRAMCAN_FLE_NBR * SRAMCAN_FLE_SIZE))) /* Rx FIFO 0 Start Address  */
+#define SRAMCAN_RF1SA ((uint32_t)(SRAMCAN_RF0SA + (SRAMCAN_RF0_NBR * SRAMCAN_RF0_SIZE))) /* Rx FIFO 1 Start Address  */
+#define SRAMCAN_TEFSA ((uint32_t)(SRAMCAN_RF1SA + (SRAMCAN_RF1_NBR * SRAMCAN_RF1_SIZE))) /* Tx Event FIFO Start
+                                                                                            Address */
+#define SRAMCAN_TFQSA ((uint32_t)(SRAMCAN_TEFSA + (SRAMCAN_TEF_NBR * SRAMCAN_TEF_SIZE))) /* Tx FIFO/Queue Start
+                                                                                            Address                  */
+#define SRAMCAN_SIZE  ((uint32_t)(SRAMCAN_TFQSA + (SRAMCAN_TFQ_NBR * SRAMCAN_TFQ_SIZE))) /* Message RAM size         */
+
+static const uint8_t DLCtoBytes[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64};
+
+/**
+  * @brief  Get an FDCAN frame from the Rx FIFO zone into the message RAM.
+  * @param  hfdcan pointer to an FDCAN_HandleTypeDef structure that contains
+  *         the configuration information for the specified FDCAN.
+  * @param  RxLocation Location of the received message to be read.
+  *         This parameter can be a value of @arg FDCAN_Rx_location.
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_FDCAN_RxMessageDMA(FDCAN_HandleTypeDef *hfdcan, uint32_t RxLocation)
+{
+  uint32_t *RxAddress;
+  uint8_t  *pData;
+  uint32_t ByteCounter;
+  uint32_t GetIndex;
+  HAL_FDCAN_StateTypeDef state = hfdcan->State;
+
+  /* Check function parameters */
+  assert_param(IS_FDCAN_RX_FIFO(RxLocation));
+
+  if (state == HAL_FDCAN_STATE_BUSY)
+  {
+    if (RxLocation == FDCAN_RX_FIFO0) /* Rx element is assigned to the Rx FIFO 0 */
+    {
+      /* Check that the Rx FIFO 0 is not empty */
+      if ((hfdcan->Instance->RXF0S & FDCAN_RXF0S_F0FL) == 0U)
+      {
+        /* Update error code */
+        hfdcan->ErrorCode |= HAL_FDCAN_ERROR_FIFO_EMPTY;
+
+        return HAL_ERROR;
+      }
+      else
+      {
+        /* Calculate Rx FIFO 0 element index */
+        GetIndex = ((hfdcan->Instance->RXF0S & FDCAN_RXF0S_F0GI) >> FDCAN_RXF0S_F0GI_Pos);
+
+        /* Check that the Rx FIFO 0 is full & overwrite mode is on */
+        if (((hfdcan->Instance->RXF0S & FDCAN_RXF0S_F0F) >> FDCAN_RXF0S_F0F_Pos) == 1U)
+        {
+          if (((hfdcan->Instance->RXGFC & FDCAN_RXGFC_F0OM) >> FDCAN_RXGFC_F0OM_Pos) == FDCAN_RX_FIFO_OVERWRITE)
+          {
+            /* When overwrite status is on discard first message in FIFO */
+            /* GetIndex is incremented by one and wraps to 0 in case it overflows the FIFO size */
+            GetIndex = (GetIndex + 1U) & SRAMCAN_RF0_NBR;
+          }
+        }
+
+        /* Calculate Rx FIFO 0 element address */
+        RxAddress = (uint32_t *)(hfdcan->msgRam.RxFIFO0SA + (GetIndex * SRAMCAN_RF0_SIZE));
+      }
+    }
+    else /* Rx element is assigned to the Rx FIFO 1 */
+    {
+      /* Check that the Rx FIFO 1 is not empty */
+      if ((hfdcan->Instance->RXF1S & FDCAN_RXF1S_F1FL) == 0U)
+      {
+        /* Update error code */
+        hfdcan->ErrorCode |= HAL_FDCAN_ERROR_FIFO_EMPTY;
+
+        return HAL_ERROR;
+      }
+      else
+      {
+        /* Calculate Rx FIFO 1 element index */
+        GetIndex = ((hfdcan->Instance->RXF1S & FDCAN_RXF1S_F1GI) >> FDCAN_RXF1S_F1GI_Pos);
+
+        /* Check that the Rx FIFO 1 is full & overwrite mode is on */
+        if (((hfdcan->Instance->RXF1S & FDCAN_RXF1S_F1F) >> FDCAN_RXF1S_F1F_Pos) == 1U)
+        {
+          if (((hfdcan->Instance->RXGFC & FDCAN_RXGFC_F1OM) >> FDCAN_RXGFC_F1OM_Pos) == FDCAN_RX_FIFO_OVERWRITE)
+          {
+            /* When overwrite status is on discard first message in FIFO */
+            /* GetIndex is incremented by one and wraps to 0 in case it overflows the FIFO size */
+            GetIndex = (GetIndex + 1U) & SRAMCAN_RF1_NBR;
+          }
+        }
+
+        /* Calculate Rx FIFO 1 element address */
+        RxAddress = (uint32_t *)(hfdcan->msgRam.RxFIFO1SA + (GetIndex * SRAMCAN_RF1_SIZE));
+      }
+    }
+
+    /* Retrieve DataLength */
+    HAL_UART_Transmit_DMA(&huart4, (uint8_t *)RxAddress, 2*4+DLCtoBytes[((*(RxAddress+1) & FDCAN_ELEMENT_MASK_DLC) >> 16U)] );
+
+    // /* Retrieve IdType */
+    // pRxHeader->IdType = *RxAddress & FDCAN_ELEMENT_MASK_XTD;
+
+    // /* Retrieve Identifier */
+    // if (pRxHeader->IdType == FDCAN_STANDARD_ID) /* Standard ID element */
+    // {
+    //   pRxHeader->Identifier = ((*RxAddress & FDCAN_ELEMENT_MASK_STDID) >> 18U);
+    // }
+    // else /* Extended ID element */
+    // {
+    //   pRxHeader->Identifier = (*RxAddress & FDCAN_ELEMENT_MASK_EXTID);
+    // }
+
+    // /* Retrieve RxFrameType */
+    // pRxHeader->RxFrameType = (*RxAddress & FDCAN_ELEMENT_MASK_RTR);
+
+    // /* Retrieve ErrorStateIndicator */
+    // pRxHeader->ErrorStateIndicator = (*RxAddress & FDCAN_ELEMENT_MASK_ESI);
+
+    // /* Increment RxAddress pointer to second word of Rx FIFO element */
+    // RxAddress++;
+
+    // /* Retrieve RxTimestamp */
+    // pRxHeader->RxTimestamp = (*RxAddress & FDCAN_ELEMENT_MASK_TS);
+
+    // /* Retrieve DataLength */
+    // pRxHeader->DataLength = ((*RxAddress & FDCAN_ELEMENT_MASK_DLC) >> 16U);
+
+    // /* Retrieve BitRateSwitch */
+    // pRxHeader->BitRateSwitch = (*RxAddress & FDCAN_ELEMENT_MASK_BRS);
+
+    // /* Retrieve FDFormat */
+    // pRxHeader->FDFormat = (*RxAddress & FDCAN_ELEMENT_MASK_FDF);
+
+    // /* Retrieve FilterIndex */
+    // pRxHeader->FilterIndex = ((*RxAddress & FDCAN_ELEMENT_MASK_FIDX) >> 24U);
+
+    // /* Retrieve NonMatchingFrame */
+    // pRxHeader->IsFilterMatchingFrame = ((*RxAddress & FDCAN_ELEMENT_MASK_ANMF) >> 31U);
+
+    // /* Increment RxAddress pointer to payload of Rx FIFO element */
+    // RxAddress++;
+
+    // /* Retrieve Rx payload */
+    // pData = (uint8_t *)RxAddress;
+    // for (ByteCounter = 0; ByteCounter < DLCtoBytes[pRxHeader->DataLength]; ByteCounter++)
+    // {
+    //   pRxData[ByteCounter] = pData[ByteCounter];
+    // }
+
+    if (RxLocation == FDCAN_RX_FIFO0) /* Rx element is assigned to the Rx FIFO 0 */
+    {
+      /* Acknowledge the Rx FIFO 0 that the oldest element is read so that it increments the GetIndex */
+      hfdcan->Instance->RXF0A = GetIndex;
+    }
+    else /* Rx element is assigned to the Rx FIFO 1 */
+    {
+      /* Acknowledge the Rx FIFO 1 that the oldest element is read so that it increments the GetIndex */
+      hfdcan->Instance->RXF1A = GetIndex;
+    }
+
+    /* Return function status */
+    return HAL_OK;
+  }
+  else
+  {
+    /* Update error code */
+    hfdcan->ErrorCode |= HAL_FDCAN_ERROR_NOT_STARTED;
+
+    return HAL_ERROR;
+  }
+}
 
 /* USER CODE END 4 */
 

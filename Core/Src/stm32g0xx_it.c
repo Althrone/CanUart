@@ -61,6 +61,10 @@ extern DMA_HandleTypeDef hdma_usart4_rx;
 extern DMA_HandleTypeDef hdma_usart4_tx;
 extern DMA_HandleTypeDef hdma_usart5_rx;
 extern DMA_HandleTypeDef hdma_usart5_tx;
+extern UART_HandleTypeDef huart3;
+extern UART_HandleTypeDef huart4;
+extern UART_HandleTypeDef huart5;
+extern UART_HandleTypeDef huart6;
 /* USER CODE BEGIN EV */
 
 /* USER CODE END EV */
@@ -218,6 +222,72 @@ void TIM17_FDCAN_IT1_IRQHandler(void)
   /* USER CODE END TIM17_FDCAN_IT1_IRQn 1 */
 }
 
+/**
+  * @brief This function handles USART3, USART4, USART5, USART6, LPUART1 globlal Interrupts (combined with EXTI 28).
+  */
+void USART3_4_5_6_LPUART1_IRQHandler(void)
+{
+  /* USER CODE BEGIN USART3_4_5_6_LPUART1_IRQn 0 */
+
+  /* USER CODE END USART3_4_5_6_LPUART1_IRQn 0 */
+  HAL_UART_IRQHandler(&huart3);
+  HAL_UART_IRQHandler(&huart4);
+  HAL_UART_IRQHandler(&huart5);
+  HAL_UART_IRQHandler(&huart6);
+  /* USER CODE BEGIN USART3_4_5_6_LPUART1_IRQn 1 */
+
+  /* USER CODE END USART3_4_5_6_LPUART1_IRQn 1 */
+}
+
 /* USER CODE BEGIN 1 */
 
+extern HAL_StatusTypeDef HAL_FDCAN_RxMessageDMA(FDCAN_HandleTypeDef *hfdcan, uint32_t RxLocation);
+
+/**
+  * @brief  Rx FIFO 0 callback.
+  * @param  hfdcan pointer to an FDCAN_HandleTypeDef structure that contains
+  *         the configuration information for the specified FDCAN.
+  * @param  RxFifo0ITs indicates which Rx FIFO 0 interrupts are signaled.
+  *         This parameter can be any combination of @arg FDCAN_Rx_Fifo0_Interrupts.
+  * @retval None
+  */
+void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
+{
+  if(hfdcan == &hfdcan1)
+  {
+    if(RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE)
+    {
+      
+    }
+  }
+  else if(hfdcan == &hfdcan2)
+  {
+    if(RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE)
+    {
+      FDCAN_RxHeaderTypeDef RxHeader;
+      uint8_t RxData[8];
+      // HAL_FDCAN_GetRxMessage(&hfdcan2, FDCAN_RX_FIFO0, &RxHeader, RxData);
+      // HAL_UART_Transmit(&huart4, "Hello World!\r\n", 14, 1000);
+      HAL_FDCAN_RxMessageDMA(&hfdcan2, FDCAN_RX_FIFO0);
+    }
+  }
+}
+
+void HAL_FDCAN_RxFifo1Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo1ITs)
+{
+  if(hfdcan == &hfdcan1)
+  {
+    if(RxFifo1ITs & FDCAN_IT_RX_FIFO1_NEW_MESSAGE)
+    {
+
+    }
+  }
+  else if(hfdcan == &hfdcan2)
+  {
+    if(RxFifo1ITs & FDCAN_IT_RX_FIFO1_NEW_MESSAGE)
+    {
+      
+    }
+  }
+}
 /* USER CODE END 1 */

@@ -1,0 +1,33 @@
+
+
+
+Breakpoint=D:/Project/CanUart/Core/Src/stm32g0xx_it.c:199, State=BP_STATE_ON
+Breakpoint=D:/Project/CanUart/Core/Src/main.c:126, State=BP_STATE_DISABLED
+OpenDocument="stm32g0xx_hal_uart.c", FilePath="D:/Project/CanUart/stm32g0xx-hal-driver/Src/stm32g0xx_hal_uart.c", Line=1148
+OpenDocument="stm32g0xx_hal_fdcan.c", FilePath="D:/Project/CanUart/stm32g0xx-hal-driver/Src/stm32g0xx_hal_fdcan.c", Line=2990
+OpenDocument="stm32g0xx_it.c", FilePath="D:/Project/CanUart/Core/Src/stm32g0xx_it.c", Line=203
+OpenDocument="main.c", FilePath="D:/Project/CanUart/Core/Src/main.c", Line=72
+OpenDocument="stm32g0xx_hal_rcc.c", FilePath="D:/Project/CanUart/stm32g0xx-hal-driver/Src/stm32g0xx_hal_rcc.c", Line=742
+OpenDocument="stm32g0xx_hal_msp.c", FilePath="D:/Project/CanUart/Core/Src/stm32g0xx_hal_msp.c", Line=151
+OpenDocument="startup_stm32g0b1xx.s", FilePath="D:/Project/CanUart/cmsis-device-g0/Source/Templates/gcc/startup_stm32g0b1xx.s", Line=49
+OpenDocument="stm32g0xx_hal.c", FilePath="D:/Project/CanUart/stm32g0xx-hal-driver/Src/stm32g0xx_hal.c", Line=384
+OpenDocument="stm32g0xx_hal_gpio.c", FilePath="D:/Project/CanUart/stm32g0xx-hal-driver/Src/stm32g0xx_hal_gpio.c", Line=152
+OpenToolbar="Debug", Floating=0, x=0, y=0
+OpenWindow="Call Stack", DockArea=BOTTOM, x=2, y=0, w=390, h=180, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Source Files", DockArea=LEFT, x=0, y=0, w=295, h=296, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Disassembly", DockArea=RIGHT, x=0, y=0, w=399, h=175, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Memory 1", DockArea=BOTTOM, x=1, y=0, w=1145, h=180, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0, EditorAddress=0x4000B750
+OpenWindow="Local Data", DockArea=RIGHT, x=0, y=1, w=399, h=516, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Watched Data 1", DockArea=LEFT, x=0, y=1, w=295, h=219, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Functions", DockArea=LEFT, x=0, y=2, w=295, h=175, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+OpenWindow="Console", DockArea=BOTTOM, x=0, y=0, w=379, h=180, FilterBarShown=0, TotalValueBarShown=0, ToolBarShown=0
+SmartViewPlugin="", Page="", Toolbar="Hidden", Window="SmartView 1"
+TableHeader="Local Data", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Location";"Size";"Type";"Scope"], ColWidths=[140;100;100;100;105;100]
+TableHeader="Functions", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Address";"Size";"#Insts";"Source"], ColWidths=[980;100;100;100;200]
+TableHeader="Call Stack", SortCol="Function", SortOrder="ASCENDING", VisibleCols=["Function";"Stack Frame";"Source";"PC";"Return Address";"Stack Used"], ColWidths=[186;112;100;100;112;100]
+TableHeader="Power Sampling", SortCol="None", SortOrder="ASCENDING", VisibleCols=["Index";"Time";"Ch 0"], ColWidths=[100;100;100]
+TableHeader="RegisterSelectionDialog", SortCol="None", SortOrder="ASCENDING", VisibleCols=[], ColWidths=[]
+TableHeader="TargetExceptionDialog", SortCol="Name", SortOrder="ASCENDING", VisibleCols=["Name";"Value";"Address";"Description"], ColWidths=[200;100;100;376]
+TableHeader="Watched Data 1", SortCol="Expression", SortOrder="ASCENDING", VisibleCols=["Expression";"Value";"Location";"Refresh"], ColWidths=[107;100;100;100]
+TableHeader="Source Files", SortCol="File", SortOrder="ASCENDING", VisibleCols=["File";"Status";"Size";"#Insts";"Path"], ColWidths=[174;100;100;100;776]
+WatchedExpression="hfdcan2", DisplayFormat=DISPLAY_FORMAT_HEX, Window=Watched Data 1

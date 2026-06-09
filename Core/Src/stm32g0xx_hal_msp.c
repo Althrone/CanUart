@@ -129,7 +129,7 @@ void HAL_FDCAN_MspInit(FDCAN_HandleTypeDef* hfdcan)
     GPIO_InitStruct.Pin = GPIO_PIN_9|GPIO_PIN_8;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF3_FDCAN1;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
@@ -172,7 +172,7 @@ void HAL_FDCAN_MspInit(FDCAN_HandleTypeDef* hfdcan)
     GPIO_InitStruct.Pin = GPIO_PIN_5|GPIO_PIN_6;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF3_FDCAN2;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
@@ -311,10 +311,13 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_2;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF4_USART3;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
+    /* USART3 interrupt Init */
+    HAL_NVIC_SetPriority(USART3_4_5_6_LPUART1_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(USART3_4_5_6_LPUART1_IRQn);
   /* USER CODE BEGIN USART3_MspInit 1 */
 
   /* USER CODE END USART3_MspInit 1 */
@@ -336,7 +339,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF4_USART4;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
@@ -375,6 +378,9 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
 
     __HAL_LINKDMA(huart,hdmatx,hdma_usart4_tx);
 
+    /* USART4 interrupt Init */
+    HAL_NVIC_SetPriority(USART3_4_5_6_LPUART1_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(USART3_4_5_6_LPUART1_IRQn);
   /* USER CODE BEGIN USART4_MspInit 1 */
 
   /* USER CODE END USART4_MspInit 1 */
@@ -396,7 +402,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     GPIO_InitStruct.Pin = GPIO_PIN_3|GPIO_PIN_4;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF3_USART5;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
@@ -435,6 +441,9 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
 
     __HAL_LINKDMA(huart,hdmatx,hdma_usart5_tx);
 
+    /* USART5 interrupt Init */
+    HAL_NVIC_SetPriority(USART3_4_5_6_LPUART1_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(USART3_4_5_6_LPUART1_IRQn);
   /* USER CODE BEGIN USART5_MspInit 1 */
 
   /* USER CODE END USART5_MspInit 1 */
@@ -456,10 +465,13 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
     GPIO_InitStruct.Pin = GPIO_PIN_4|GPIO_PIN_5;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF3_USART6;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+    /* USART6 interrupt Init */
+    HAL_NVIC_SetPriority(USART3_4_5_6_LPUART1_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(USART3_4_5_6_LPUART1_IRQn);
   /* USER CODE BEGIN USART6_MspInit 1 */
 
   /* USER CODE END USART6_MspInit 1 */
@@ -489,6 +501,15 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
     */
     HAL_GPIO_DeInit(GPIOB, GPIO_PIN_0|GPIO_PIN_2);
 
+    /* USART3 interrupt DeInit */
+  /* USER CODE BEGIN USART3:USART3_4_5_6_LPUART1_IRQn disable */
+    /**
+    * Uncomment the line below to disable the "USART3_4_5_6_LPUART1_IRQn" interrupt
+    * Be aware, disabling shared interrupt may affect other IPs
+    */
+    /* HAL_NVIC_DisableIRQ(USART3_4_5_6_LPUART1_IRQn); */
+  /* USER CODE END USART3:USART3_4_5_6_LPUART1_IRQn disable */
+
   /* USER CODE BEGIN USART3_MspDeInit 1 */
 
   /* USER CODE END USART3_MspDeInit 1 */
@@ -510,6 +531,16 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
     /* USART4 DMA DeInit */
     HAL_DMA_DeInit(huart->hdmarx);
     HAL_DMA_DeInit(huart->hdmatx);
+
+    /* USART4 interrupt DeInit */
+  /* USER CODE BEGIN USART4:USART3_4_5_6_LPUART1_IRQn disable */
+    /**
+    * Uncomment the line below to disable the "USART3_4_5_6_LPUART1_IRQn" interrupt
+    * Be aware, disabling shared interrupt may affect other IPs
+    */
+    /* HAL_NVIC_DisableIRQ(USART3_4_5_6_LPUART1_IRQn); */
+  /* USER CODE END USART4:USART3_4_5_6_LPUART1_IRQn disable */
+
   /* USER CODE BEGIN USART4_MspDeInit 1 */
 
   /* USER CODE END USART4_MspDeInit 1 */
@@ -531,6 +562,16 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
     /* USART5 DMA DeInit */
     HAL_DMA_DeInit(huart->hdmarx);
     HAL_DMA_DeInit(huart->hdmatx);
+
+    /* USART5 interrupt DeInit */
+  /* USER CODE BEGIN USART5:USART3_4_5_6_LPUART1_IRQn disable */
+    /**
+    * Uncomment the line below to disable the "USART3_4_5_6_LPUART1_IRQn" interrupt
+    * Be aware, disabling shared interrupt may affect other IPs
+    */
+    /* HAL_NVIC_DisableIRQ(USART3_4_5_6_LPUART1_IRQn); */
+  /* USER CODE END USART5:USART3_4_5_6_LPUART1_IRQn disable */
+
   /* USER CODE BEGIN USART5_MspDeInit 1 */
 
   /* USER CODE END USART5_MspDeInit 1 */
@@ -548,6 +589,15 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
     PA5     ------> USART6_RX
     */
     HAL_GPIO_DeInit(GPIOA, GPIO_PIN_4|GPIO_PIN_5);
+
+    /* USART6 interrupt DeInit */
+  /* USER CODE BEGIN USART6:USART3_4_5_6_LPUART1_IRQn disable */
+    /**
+    * Uncomment the line below to disable the "USART3_4_5_6_LPUART1_IRQn" interrupt
+    * Be aware, disabling shared interrupt may affect other IPs
+    */
+    /* HAL_NVIC_DisableIRQ(USART3_4_5_6_LPUART1_IRQn); */
+  /* USER CODE END USART6:USART3_4_5_6_LPUART1_IRQn disable */
 
   /* USER CODE BEGIN USART6_MspDeInit 1 */
 

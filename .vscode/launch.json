@@ -8,6 +8,26 @@
             "type": "cppdbg",
             "program": "${workspaceFolder}/build/CanUart.elf",
             "MIMode": "gdb",
+            "miDebuggerPath": "arm-none-eabi-gdb.exe",
+            "miDebuggerServerAddress": "localhost:3333",
+            "setupCommands": [
+                {
+                    "text": "target extended-remote localhost:3333",
+                    "ignoreFailures": false
+                },
+                {
+                    "text": "monitor reset halt",
+                    "ignoreFailures": false
+                },
+                {
+                    "text": "load",
+                    "ignoreFailures": false
+                }
+            ],
+            // "svdPath": "",
+            "stopAtEntry": true,
+            "environment": [],
+            "externalConsole": false,
         }
     ]
 }

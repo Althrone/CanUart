@@ -1,0 +1,28 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Start OpenOCD (J-Link)",
+            "type": "shell",
+            "command": "openocd",
+            "args": [
+                "-f", "interface/jlink.cfg",
+                "-f", "target/stm32g0x.cfg"
+            ],
+            "isBackground": true,
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "^Info : Listening on port 3333 for gdb connections",
+                    "file": 1,
+                    "location": 2,
+                    "message": 3
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "^.*$",
+                    "endsPattern": "^Info : Listening on port 3333 for gdb connections"
+                }
+            }
+        }
+    ]
+}
