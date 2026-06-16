@@ -72,6 +72,9 @@ static void MX_USART6_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+#define BUFFER_SIZE (72*2*2)//canfd最长数据段64字节，帧头8字节，共72字节，留两帧空间
+
+uint8_t uartRxData[BUFFER_SIZE];
 
 /* USER CODE END 0 */
 
@@ -112,6 +115,7 @@ int main(void)
   MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
 
+
   //复位CH347
   HAL_GPIO_WritePin(CH347_RST_GPIO_Port, CH347_RST_Pin, GPIO_PIN_SET);
 
@@ -125,6 +129,17 @@ int main(void)
   HAL_GPIO_WritePin(CAN2_RES_GPIO_Port, CAN2_RES_Pin, GPIO_PIN_SET);
   // HAL_UART_Transmit(&huart4, "Hello World!\r\n", 14, 1000);
     // HAL_UART_Transmit(&huart5, "Hello World5!\r\n", 15, 1000);
+
+  if (HAL_FDCAN_ConfigTxDelayCompensation(&hfdcan2, 8, 4) != HAL_OK)
+  {
+      Error_Handler();
+  }
+
+  if (HAL_FDCAN_EnableTxDelayCompensation(&hfdcan2) != HAL_OK)
+  {
+      Error_Handler();
+  }
+
   HAL_FDCAN_Start(&hfdcan1);
   HAL_FDCAN_Start(&hfdcan2);
 
@@ -146,6 +161,9 @@ int main(void)
                       0x00,0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
                       0x00,0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
                       0x00,0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+
+  HAL_UARTEx_ReceiveToIdle_DMA(&huart4, uartRxData, BUFFER_SIZE);
+    // HAL_UART_Receive_DMA(&huart4, &hfdcan2.msgRam.TxFIFOQSA, 8);
   while(1)
   {
     // HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &TxHeader, TxData);
@@ -157,6 +175,8 @@ int main(void)
     // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET);
     // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
     HAL_Delay(100);
+
+    
 
     // HAL_FDCAN_GetRxMessage(&hfdcan2, FDCAN_RX_FIFO0, &RxHeader, RxData);
   // while (1);
@@ -264,6 +284,7 @@ static void MX_FDCAN1_Init(void)
   
   HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE,0);
   HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO1_NEW_MESSAGE,0);
+  HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_TX_COMPLETE,FDCAN_TX_BUFFER0|FDCAN_TX_BUFFER1|FDCAN_TX_BUFFER2);
 
   /* USER CODE END FDCAN1_Init 2 */
 
@@ -291,14 +312,14 @@ static void MX_FDCAN2_Init(void)
   hfdcan2.Init.AutoRetransmission = DISABLE;
   hfdcan2.Init.TransmitPause = DISABLE;
   hfdcan2.Init.ProtocolException = DISABLE;
-  hfdcan2.Init.NominalPrescaler = 8;
+  hfdcan2.Init.NominalPrescaler = 1;
   hfdcan2.Init.NominalSyncJumpWidth = 1;
-  hfdcan2.Init.NominalTimeSeg1 = 5;
-  hfdcan2.Init.NominalTimeSeg2 = 2;
-  hfdcan2.Init.DataPrescaler = 2;
+  hfdcan2.Init.NominalTimeSeg1 = 47;
+  hfdcan2.Init.NominalTimeSeg2 = 16;
+  hfdcan2.Init.DataPrescaler = 1;
   hfdcan2.Init.DataSyncJumpWidth = 1;
-  hfdcan2.Init.DataTimeSeg1 = 6;
-  hfdcan2.Init.DataTimeSeg2 = 1;
+  hfdcan2.Init.DataTimeSeg1 = 11;
+  hfdcan2.Init.DataTimeSeg2 = 4;
   hfdcan2.Init.StdFiltersNbr = 0;
   hfdcan2.Init.ExtFiltersNbr = 0;
   hfdcan2.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
@@ -315,6 +336,7 @@ static void MX_FDCAN2_Init(void)
 
   HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO0_NEW_MESSAGE,0);
   HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO1_NEW_MESSAGE,0);
+  HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_TX_COMPLETE,FDCAN_TX_BUFFER0|FDCAN_TX_BUFFER1|FDCAN_TX_BUFFER2);
 
   /* USER CODE END FDCAN2_Init 2 */
 
@@ -603,6 +625,8 @@ static void MX_GPIO_Init(void)
 
 static const uint8_t DLCtoBytes[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 12, 16, 20, 24, 32, 48, 64};
 
+uint8_t g_shadow_tx_fifo_q[2][SRAMCAN_TFQ_NBR][SRAMCAN_TFQ_SIZE]; /* Tx FIFO/Queue shadow */
+
 /**
   * @brief  Get an FDCAN frame from the Rx FIFO zone into the message RAM.
   * @param  hfdcan pointer to an FDCAN_HandleTypeDef structure that contains
@@ -761,6 +785,58 @@ HAL_StatusTypeDef HAL_FDCAN_RxMessageDMA(FDCAN_HandleTypeDef *hfdcan, uint32_t R
   }
 }
 
+/**
+  * @brief  Add a message to the Tx FIFO/Queue and activate the corresponding transmission request
+  * @param  hfdcan pointer to an FDCAN_HandleTypeDef structure that contains
+  *         the configuration information for the specified FDCAN.
+  * @param  pTxHeader pointer to a FDCAN_TxHeaderTypeDef structure.
+  * @param  pTxData pointer to a buffer containing the payload of the Tx frame.
+  * @retval HAL status
+  */
+HAL_StatusTypeDef HAL_FDCAN_AddMessageToTxFifoQ_Raw(FDCAN_HandleTypeDef *hfdcan, uint32_t can_frame_pos, uint8_t frame_len)
+{
+  uint32_t PutIndex;
+
+  if (hfdcan->State == HAL_FDCAN_STATE_BUSY)
+  {
+    /* Check that the Tx FIFO/Queue is not full */
+    if ((hfdcan->Instance->TXFQS & FDCAN_TXFQS_TFQF) != 0U)
+    {
+      /* Update error code */
+      hfdcan->ErrorCode |= HAL_FDCAN_ERROR_FIFO_FULL;
+
+      return HAL_ERROR;
+    }
+    else
+    {
+      /* Retrieve the Tx FIFO PutIndex */
+      PutIndex = ((hfdcan->Instance->TXFQS & FDCAN_TXFQS_TFQPI) >> FDCAN_TXFQS_TFQPI_Pos);
+
+      // /* Add the message to the Tx FIFO/Queue */
+      // FDCAN_CopyMessageToRAM(hfdcan, pTxHeader, pTxData, PutIndex);
+      uint8_t mov_cycle = (8+frame_len)/4+((8+frame_len)%4?1:0);
+      for(uint8_t i = 0; i < mov_cycle; i++) {
+        *((uint32_t *)(hfdcan->msgRam.TxFIFOQSA+PutIndex*SRAMCAN_TFQ_SIZE)+i) = *(uint32_t *)(&(uartRxData[(can_frame_pos + i*4) % BUFFER_SIZE]));
+      }
+
+      /* Activate the corresponding transmission request */
+      hfdcan->Instance->TXBAR = ((uint32_t)1 << PutIndex);//可以同时发送多个
+
+      /* Store the Latest Tx FIFO/Queue Request Buffer Index */
+      hfdcan->LatestTxFifoQRequest = ((uint32_t)1 << PutIndex);
+    }
+
+    /* Return function status */
+    return HAL_OK;
+  }
+  else
+  {
+    /* Update error code */
+    hfdcan->ErrorCode |= HAL_FDCAN_ERROR_NOT_STARTED;
+
+    return HAL_ERROR;
+  }
+}
 /* USER CODE END 4 */
 
 /**

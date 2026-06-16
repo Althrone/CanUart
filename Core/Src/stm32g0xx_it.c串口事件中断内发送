@@ -340,114 +340,141 @@ typedef enum {
     RX_STATE_WAIT_DATA      // 等待接收数据载荷
 } RxState_t;
 
-#define BUFFER_SIZE (72*2)//canfd最长数据段64字节，帧头8字节，共72字节，留两帧空间
 RxState_t rx_state = RX_STATE_WAIT_HEADER;
 uint32_t can_frame_pos =0;//准备放到can tx fifo的帧的头地址
-extern uint8_t uartRxData[BUFFER_SIZE];
-
-uint8_t can_is_transfering = 0;
+extern uint8_t uartRxData[72*2];
 
 extern  HAL_StatusTypeDef HAL_FDCAN_AddMessageToTxFifoQ_Raw(FDCAN_HandleTypeDef *hfdcan, uint32_t can_frame_pos, uint8_t frame_len);
 
-uint32_t BufferUnsentLen(uint32_t head_index, uint32_t tail_index)
-{
-  if (tail_index >= head_index)
-  {
-    return (tail_index - head_index);
-  }
-  else
-  {
-    return (BUFFER_SIZE - head_index + tail_index);
-  }
-}
-
-uint8_t ParseCanDataLen(uint32_t head_index)
-{
-  if(head_index + 6 < BUFFER_SIZE) {
-    return DLCtoBytes[uartRxData[head_index + 6]&0x0F];
-  }
-  else {
-    return DLCtoBytes[uartRxData[(head_index + 6) % BUFFER_SIZE]&0x0F];
-  }
-}
-
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
-  if(huart != &huart4) return;
-
-  HAL_UART_RxEventTypeTypeDef rx_event_type = HAL_UARTEx_GetRxEventType(&huart4);
-  switch (rx_event_type)
+  if(huart == &huart4)
   {
-  case HAL_UART_RXEVENT_TC:
-    /* code */
-    break;
-  case HAL_UART_RXEVENT_HT:
-    /* code */
-    break;
-  case HAL_UART_RXEVENT_IDLE:
-    /* code */
-    break;
-  
-  default:
-    break;
-  }
-  
-  if(can_is_transfering) return;
+    //获取dma当前的位置
+    switch(rx_state) {
+      case RX_STATE_WAIT_HEADER:
+      {
+        uint32_t dma_cur_pos = 144 - __HAL_DMA_GET_COUNTER(&hdma_usart4_rx);
+        // 需要计算从上次位置到当前写入位置之间有多少新数据（处理环形缓冲区回绕）
+        uint32_t un_send_data_len;
+        //紧急状态标志位
+        uint8_t is_emergency = 0;
+        if(dma_cur_pos >= can_frame_pos) {
+          un_send_data_len = dma_cur_pos - can_frame_pos;
+        }
+        else if(dma_cur_pos < can_frame_pos) {
+          un_send_data_len = (72*2 - can_frame_pos) + dma_cur_pos;
+        }
 
-  // 1. 获取当前 DMA 写位置和未读数据长度
-  uint32_t dma_cur_pos = BUFFER_SIZE - __HAL_DMA_GET_COUNTER(&hdma_usart4_rx);
-  uint32_t unread = BufferUnsentLen(can_frame_pos, dma_cur_pos);
+        if(un_send_data_len >= 72)
+        {
+          is_emergency = 1;
+        }
 
-  // 至少要有帧头（8字节）才能继续
-  if (unread < 8) return;
+        if(is_emergency){
+          //至少有一个完整帧了，算完长度可以立刻发送
 
-  // 2. 解析帧长
-  uint32_t frame_len = ParseCanDataLen(can_frame_pos);
-  uint32_t total_needed = 8 + frame_len;
+          //找到can_frame_pos后第六个字节，要处理回绕
+          uint8_t frame_len;
+          if(can_frame_pos + 6 < 72*2) {
+            frame_len = DLCtoBytes[uartRxData[can_frame_pos + 6]&0x0F];
+          }
+          else {
+            frame_len = DLCtoBytes[uartRxData[(can_frame_pos + 6) % (72*2)]&0x0F];
+          }
 
-  // 3. 再次获取最新 DMA 位置（因为刚才解析期间可能又有新数据到达）
-  dma_cur_pos = BUFFER_SIZE - __HAL_DMA_GET_COUNTER(&hdma_usart4_rx);
-  unread = BufferUnsentLen(can_frame_pos, dma_cur_pos);
+          HAL_FDCAN_AddMessageToTxFifoQ_Raw(&hfdcan2, can_frame_pos, frame_len);//发送
 
-  // 4. 检查是否完整
-  if (unread >= total_needed) {
-    // 发送帧
-    HAL_FDCAN_AddMessageToTxFifoQ_Raw(&hfdcan2, can_frame_pos, frame_len);
-    can_is_transfering = 1;
-    // 移动读指针
-    can_frame_pos = (can_frame_pos + total_needed) % BUFFER_SIZE;
+          //更新can_frame_pos，注意回绕
+          can_frame_pos = (can_frame_pos + 8 + frame_len) % (72*2);
+
+					rx_state=RX_STATE_WAIT_HEADER;
+
+          //实际上还有可能有多个完整帧，可以继续发送
+        }
+        else{
+          if(un_send_data_len >= 8) {
+            //找到can_frame_pos后第六个字节，要处理回绕
+            uint8_t frame_len;
+            if(can_frame_pos + 6 < 72*2) {
+              frame_len = DLCtoBytes[uartRxData[can_frame_pos + 6]&0x0F];
+            }
+            else {
+              frame_len = DLCtoBytes[uartRxData[(can_frame_pos + 6) % (72*2)]&0x0F];
+            }
+
+            //获取新的dma位置
+            uint32_t new_dma_cur_pos = 144 - __HAL_DMA_GET_COUNTER(&hdma_usart4_rx);
+            //计算新的未发送数据长度，如果达到8字节帧头+数据长度，则发送，注意处理回绕
+            if(new_dma_cur_pos >= can_frame_pos) {
+              un_send_data_len = new_dma_cur_pos - can_frame_pos;
+            }
+            else if(new_dma_cur_pos < can_frame_pos) {
+              un_send_data_len = (72*2 - can_frame_pos) + new_dma_cur_pos;
+            }
+
+            if(un_send_data_len >= (8+frame_len)) {
+              HAL_FDCAN_AddMessageToTxFifoQ_Raw(&hfdcan2, can_frame_pos, frame_len);//发送
+
+              //更新can_frame_pos，注意回绕
+              can_frame_pos = (can_frame_pos + 8 + frame_len) % (72*2);
+              rx_state=RX_STATE_WAIT_HEADER;
+            }
+            else {
+              //未达到8字节帧头+数据长度，继续接收
+              rx_state=RX_STATE_WAIT_DATA;
+            }
+          }
+          else{
+            rx_state=RX_STATE_WAIT_HEADER;
+          }
+        }
+        break;
+      }
+      case RX_STATE_WAIT_DATA:
+      {
+        //找到can_frame_pos后第六个字节，要处理回绕
+        uint8_t frame_len;
+        if(can_frame_pos + 6 < 72*2) {
+          frame_len = DLCtoBytes[uartRxData[can_frame_pos + 6]&0x0F];
+        }
+        else {
+          frame_len = DLCtoBytes[uartRxData[(can_frame_pos + 6) % (72*2)]&0x0F];
+        }
+
+        //获取新的dma位置
+        uint32_t new_dma_cur_pos = 144 - __HAL_DMA_GET_COUNTER(&hdma_usart4_rx);
+        //计算新的未发送数据长度，如果达到8字节帧头+数据长度，则发送，注意处理回绕
+        uint32_t un_send_data_len;
+        if(new_dma_cur_pos >= can_frame_pos) {
+          un_send_data_len = new_dma_cur_pos - can_frame_pos;
+        }
+        else if(new_dma_cur_pos < can_frame_pos) {
+          un_send_data_len = (72*2 - can_frame_pos) + new_dma_cur_pos;
+        }
+
+        if(un_send_data_len >= (8+frame_len)) {
+          HAL_FDCAN_AddMessageToTxFifoQ_Raw(&hfdcan2, can_frame_pos, frame_len);//发送
+
+          //更新can_frame_pos，注意回绕
+          can_frame_pos = (can_frame_pos + 8 + frame_len) % (72*2);
+
+          rx_state = RX_STATE_WAIT_HEADER;
+        }
+        else {
+          //未达到8字节帧头+数据长度，继续接收
+          rx_state=RX_STATE_WAIT_DATA;
+        }
+        break;
+      }
+    }
   }
 }
 
 void HAL_FDCAN_TxBufferCompleteCallback(FDCAN_HandleTypeDef *hfdcan, uint32_t BufferIndexes)
 {
-  if (hfdcan != &hfdcan2) return;
-
-  // 上一帧发送完成，清除发送标志
-  can_is_transfering = 0;
-
-  // 1. 获取当前 DMA 写位置和未读数据长度
-  uint32_t dma_cur_pos = BUFFER_SIZE - __HAL_DMA_GET_COUNTER(&hdma_usart4_rx);
-  uint32_t unread = BufferUnsentLen(can_frame_pos, dma_cur_pos);
-
-  // 至少要有帧头（8字节）才能继续
-  if (unread < 8) return;
-
-  // 2. 解析帧长
-  uint32_t frame_len = ParseCanDataLen(can_frame_pos);
-  uint32_t total_needed = 8 + frame_len;
-
-  // 3. 再次获取最新 DMA 位置（因为刚才解析期间可能又有新数据到达）
-  dma_cur_pos = BUFFER_SIZE - __HAL_DMA_GET_COUNTER(&hdma_usart4_rx);
-  unread = BufferUnsentLen(can_frame_pos, dma_cur_pos);
-
-  // 4. 检查是否完整
-  if (unread >= total_needed) {
-    // 发送帧
-    HAL_FDCAN_AddMessageToTxFifoQ_Raw(hfdcan, can_frame_pos, frame_len);
-    can_is_transfering = 1;
-    // 移动读指针
-    can_frame_pos = (can_frame_pos + total_needed) % BUFFER_SIZE;
+  if(hfdcan == &hfdcan2) {
+    //上一个帧发送完成，检查buff是否还有可以发送的帧
   }
 }
 
