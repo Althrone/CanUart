@@ -117,7 +117,9 @@ int main(void)
 
 
   //复位CH347
+  HAL_Delay(1000);
   HAL_GPIO_WritePin(CH347_RST_GPIO_Port, CH347_RST_Pin, GPIO_PIN_SET);
+  HAL_Delay(1000);
 
   //打开can
   //控制fdcan2的
@@ -162,7 +164,9 @@ int main(void)
                       0x00,0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
                       0x00,0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
 
+  __HAL_UART_DISABLE(&huart4);
   HAL_UARTEx_ReceiveToIdle_DMA(&huart4, uartRxData, BUFFER_SIZE);
+  __HAL_UART_ENABLE(&huart4);
     // HAL_UART_Receive_DMA(&huart4, &hfdcan2.msgRam.TxFIFOQSA, 8);
   while(1)
   {
@@ -171,10 +175,10 @@ int main(void)
     // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET);
     // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
     // HAL_UART_Transmit(&huart3, "Hello World5!\r\n", 15, 1000);
-    HAL_Delay(100);
+    HAL_Delay(1000);
     // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET);
     // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
-    HAL_Delay(100);
+    HAL_Delay(1000);
 
     
 
@@ -807,10 +811,17 @@ HAL_StatusTypeDef HAL_FDCAN_AddMessageToTxFifoQ_Raw(FDCAN_HandleTypeDef *hfdcan,
 
       return HAL_ERROR;
     }
+    
     else
     {
       /* Retrieve the Tx FIFO PutIndex */
       PutIndex = ((hfdcan->Instance->TXFQS & FDCAN_TXFQS_TFQPI) >> FDCAN_TXFQS_TFQPI_Pos);
+
+      // 检查 PutIndex 对应的 Buffer 是否空闲
+      if (hfdcan->Instance->TXBRP & ((uint32_t)1 << PutIndex)) {
+        // Buffer 正在发送，不能覆盖
+        return HAL_ERROR;
+      }
 
       // /* Add the message to the Tx FIFO/Queue */
       // FDCAN_CopyMessageToRAM(hfdcan, pTxHeader, pTxData, PutIndex);

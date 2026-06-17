@@ -340,7 +340,7 @@ typedef enum {
     RX_STATE_WAIT_DATA      // 等待接收数据载荷
 } RxState_t;
 
-#define BUFFER_SIZE (72*2)//canfd最长数据段64字节，帧头8字节，共72字节，留两帧空间
+#define BUFFER_SIZE (72*2*2)//canfd最长数据段64字节，帧头8字节，共72字节，留两帧空间
 RxState_t rx_state = RX_STATE_WAIT_HEADER;
 uint32_t can_frame_pos =0;//准备放到can tx fifo的帧的头地址
 extern uint8_t uartRxData[BUFFER_SIZE];
@@ -412,10 +412,15 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
   // 4. 检查是否完整
   if (unread >= total_needed) {
     // 发送帧
-    HAL_FDCAN_AddMessageToTxFifoQ_Raw(&hfdcan2, can_frame_pos, frame_len);
-    can_is_transfering = 1;
-    // 移动读指针
-    can_frame_pos = (can_frame_pos + total_needed) % BUFFER_SIZE;
+    if (HAL_FDCAN_AddMessageToTxFifoQ_Raw(&hfdcan2, can_frame_pos, frame_len) == HAL_OK) {
+      can_is_transfering = 1;
+      // 移动读指针
+      can_frame_pos = (can_frame_pos + total_needed) % BUFFER_SIZE;
+    } else {
+        // 发送失败，保留当前帧，不清除 can_is_transfering
+        // 可设置一个重试标志，主循环中处理
+        while (1);
+    }
   }
 }
 
@@ -444,10 +449,15 @@ void HAL_FDCAN_TxBufferCompleteCallback(FDCAN_HandleTypeDef *hfdcan, uint32_t Bu
   // 4. 检查是否完整
   if (unread >= total_needed) {
     // 发送帧
-    HAL_FDCAN_AddMessageToTxFifoQ_Raw(hfdcan, can_frame_pos, frame_len);
-    can_is_transfering = 1;
-    // 移动读指针
-    can_frame_pos = (can_frame_pos + total_needed) % BUFFER_SIZE;
+    if (HAL_FDCAN_AddMessageToTxFifoQ_Raw(&hfdcan2, can_frame_pos, frame_len) == HAL_OK) {
+      can_is_transfering = 1;
+      // 移动读指针
+      can_frame_pos = (can_frame_pos + total_needed) % BUFFER_SIZE;
+    } else {
+        // 发送失败，保留当前帧，不清除 can_is_transfering
+        // 可设置一个重试标志，主循环中处理
+        while (1);
+    }
   }
 }
 
