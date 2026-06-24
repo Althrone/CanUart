@@ -8,6 +8,8 @@ git submodule add https://github.com/STMicroelectronics/stm32g0xx-hal-driver.git
 hal库
 git submodule add https://github.com/modm-io/cmsis-svd-stm32.git
 svd文件
+git submodule add https://github.com/SEGGERMicro/RTT.git
+rtt库
 
 cmsis-core
 
