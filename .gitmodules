@@ -10,3 +10,6 @@
 [submodule "cmsis-svd-stm32"]
 	path = cmsis-svd-stm32
 	url = https://github.com/modm-io/cmsis-svd-stm32.git
+[submodule "RTT"]
+	path = RTT
+	url = https://github.com/SEGGERMicro/RTT.git
