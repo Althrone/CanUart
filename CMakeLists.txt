@@ -81,13 +81,18 @@ include_directories(
     ./stm32g0xx-hal-driver/Inc
     ./Core/Inc
     ./cmsis-device-g0/Include
-    ./cmsis-core/CMSIS/Core/Include)
+    ./cmsis-core/CMSIS/Core/Include
+    ./RTT/Config
+    ./RTT/RTT)
 #添加源文件路径,即.c或者.s文件
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
     ./stm32g0xx-hal-driver/Src/*.c
     ./Core/Src/*.c
     ./cmsis-device-g0/Source/Templates/system_stm32g0xx.c
-    ./cmsis-device-g0/Source/Templates/gcc/startup_${STM32_CHIP}.s)
+    ./cmsis-device-g0/Source/Templates/gcc/startup_${STM32_CHIP}.s
+    ./RTT/RTT/*.c
+    ./RTT/RTT/*.s
+    ./RTT/Syscalls/SEGGER_RTT_Syscalls_GCC.c)
 
 list(FILTER SOURCES EXCLUDE REGEX ".*_template\.c$")
 
