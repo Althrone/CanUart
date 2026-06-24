@@ -115,76 +115,15 @@ int main(void)
   MX_USART6_UART_Init();
   /* USER CODE BEGIN 2 */
 
-
   //复位CH347
-  HAL_Delay(1000);
+  HAL_Delay(5000);
   HAL_GPIO_WritePin(CH347_RST_GPIO_Port, CH347_RST_Pin, GPIO_PIN_SET);
-  HAL_Delay(1000);
-
-  //打开can
-  //控制fdcan2的
-  HAL_GPIO_WritePin(CAN1_S_GPIO_Port, CAN1_S_Pin, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(CAN1_RES_GPIO_Port, CAN1_RES_Pin, GPIO_PIN_SET);
-
-  //控制fdcan1的
-  HAL_GPIO_WritePin(CAN2_S_GPIO_Port, CAN2_S_Pin, GPIO_PIN_RESET);
-  HAL_GPIO_WritePin(CAN2_RES_GPIO_Port, CAN2_RES_Pin, GPIO_PIN_SET);
-  // HAL_UART_Transmit(&huart4, "Hello World!\r\n", 14, 1000);
-    // HAL_UART_Transmit(&huart5, "Hello World5!\r\n", 15, 1000);
-
-  if (HAL_FDCAN_ConfigTxDelayCompensation(&hfdcan2, 8, 4) != HAL_OK)
-  {
-      Error_Handler();
-  }
-
-  if (HAL_FDCAN_EnableTxDelayCompensation(&hfdcan2) != HAL_OK)
-  {
-      Error_Handler();
-  }
-
-  HAL_FDCAN_Start(&hfdcan1);
-  HAL_FDCAN_Start(&hfdcan2);
-
-  FDCAN_TxHeaderTypeDef TxHeader={
-    .Identifier = 0x123,
-    .IdType = FDCAN_STANDARD_ID,
-    .TxFrameType = FDCAN_DATA_FRAME,
-    .DataLength = FDCAN_DLC_BYTES_64,
-    .ErrorStateIndicator = FDCAN_ESI_ACTIVE,
-    .BitRateSwitch = FDCAN_BRS_ON,
-    .FDFormat = FDCAN_FD_CAN,
-    .TxEventFifoControl = FDCAN_NO_TX_EVENTS,
-    .MessageMarker = 0
-  };
-
-  
-
-  uint8_t TxData[] = {0x00,0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
-                      0x00,0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
-                      0x00,0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
-                      0x00,0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+  HAL_Delay(5000);
 
   __HAL_UART_DISABLE(&huart4);
   HAL_UARTEx_ReceiveToIdle_DMA(&huart4, uartRxData, BUFFER_SIZE);
   __HAL_UART_ENABLE(&huart4);
-    // HAL_UART_Receive_DMA(&huart4, &hfdcan2.msgRam.TxFIFOQSA, 8);
-  while(1)
-  {
-    // HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan1, &TxHeader, TxData);
-    // HAL_FDCAN_AddMessageToTxFifoQ(&hfdcan2, &TxHeader, TxData);
-    // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_RESET);
-    // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
-    // HAL_UART_Transmit(&huart3, "Hello World5!\r\n", 15, 1000);
-    HAL_Delay(1000);
-    // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_5, GPIO_PIN_SET);
-    // HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_SET);
-    HAL_Delay(1000);
 
-    
-
-    // HAL_FDCAN_GetRxMessage(&hfdcan2, FDCAN_RX_FIFO0, &RxHeader, RxData);
-  // while (1);
-  }
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -264,14 +203,14 @@ static void MX_FDCAN1_Init(void)
   hfdcan1.Init.AutoRetransmission = DISABLE;
   hfdcan1.Init.TransmitPause = DISABLE;
   hfdcan1.Init.ProtocolException = DISABLE;
-  hfdcan1.Init.NominalPrescaler = 8;
+  hfdcan1.Init.NominalPrescaler = 1;
   hfdcan1.Init.NominalSyncJumpWidth = 1;
-  hfdcan1.Init.NominalTimeSeg1 = 5;
-  hfdcan1.Init.NominalTimeSeg2 = 2;
-  hfdcan1.Init.DataPrescaler = 2;
+  hfdcan1.Init.NominalTimeSeg1 = 47;
+  hfdcan1.Init.NominalTimeSeg2 = 16;
+  hfdcan1.Init.DataPrescaler = 1;
   hfdcan1.Init.DataSyncJumpWidth = 1;
-  hfdcan1.Init.DataTimeSeg1 = 6;
-  hfdcan1.Init.DataTimeSeg2 = 1;
+  hfdcan1.Init.DataTimeSeg1 = 11;
+  hfdcan1.Init.DataTimeSeg2 = 4;
   hfdcan1.Init.StdFiltersNbr = 0;
   hfdcan1.Init.ExtFiltersNbr = 0;
   hfdcan1.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
@@ -281,6 +220,10 @@ static void MX_FDCAN1_Init(void)
   }
   /* USER CODE BEGIN FDCAN1_Init 2 */
 
+  //控制fdcan1的
+  HAL_GPIO_WritePin(CAN2_S_GPIO_Port, CAN2_S_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(CAN2_RES_GPIO_Port, CAN2_RES_Pin, GPIO_PIN_SET);
+
   HAL_FDCAN_ConfigGlobalFilter(&hfdcan1, FDCAN_ACCEPT_IN_RX_FIFO0, FDCAN_ACCEPT_IN_RX_FIFO1, FDCAN_FILTER_REMOTE, FDCAN_FILTER_REMOTE);
 
   HAL_FDCAN_ConfigInterruptLines(&hfdcan1,FDCAN_IT_GROUP_RX_FIFO0,FDCAN_INTERRUPT_LINE0);
@@ -289,6 +232,18 @@ static void MX_FDCAN1_Init(void)
   HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO0_NEW_MESSAGE,0);
   HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_RX_FIFO1_NEW_MESSAGE,0);
   HAL_FDCAN_ActivateNotification(&hfdcan1, FDCAN_IT_TX_COMPLETE,FDCAN_TX_BUFFER0|FDCAN_TX_BUFFER1|FDCAN_TX_BUFFER2);
+
+  if (HAL_FDCAN_ConfigTxDelayCompensation(&hfdcan1, 8, 4) != HAL_OK)
+  {
+      Error_Handler();
+  }
+
+  if (HAL_FDCAN_EnableTxDelayCompensation(&hfdcan1) != HAL_OK)
+  {
+      Error_Handler();
+  }
+
+  HAL_FDCAN_Start(&hfdcan1);
 
   /* USER CODE END FDCAN1_Init 2 */
 
@@ -333,6 +288,10 @@ static void MX_FDCAN2_Init(void)
   }
   /* USER CODE BEGIN FDCAN2_Init 2 */
 
+  //控制fdcan2的
+  HAL_GPIO_WritePin(CAN1_S_GPIO_Port, CAN1_S_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(CAN1_RES_GPIO_Port, CAN1_RES_Pin, GPIO_PIN_SET);
+
   HAL_FDCAN_ConfigGlobalFilter(&hfdcan2, FDCAN_ACCEPT_IN_RX_FIFO0, FDCAN_ACCEPT_IN_RX_FIFO0, FDCAN_FILTER_REMOTE, FDCAN_FILTER_REMOTE);
 
   HAL_FDCAN_ConfigInterruptLines(&hfdcan2,FDCAN_IT_GROUP_RX_FIFO0,FDCAN_INTERRUPT_LINE1);
@@ -341,6 +300,18 @@ static void MX_FDCAN2_Init(void)
   HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO0_NEW_MESSAGE,0);
   HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_RX_FIFO1_NEW_MESSAGE,0);
   HAL_FDCAN_ActivateNotification(&hfdcan2, FDCAN_IT_TX_COMPLETE,FDCAN_TX_BUFFER0|FDCAN_TX_BUFFER1|FDCAN_TX_BUFFER2);
+
+  if (HAL_FDCAN_ConfigTxDelayCompensation(&hfdcan2, 8, 4) != HAL_OK)
+  {
+      Error_Handler();
+  }
+
+  if (HAL_FDCAN_EnableTxDelayCompensation(&hfdcan2) != HAL_OK)
+  {
+      Error_Handler();
+  }
+
+  HAL_FDCAN_Start(&hfdcan2);
 
   /* USER CODE END FDCAN2_Init 2 */
 
@@ -539,7 +510,8 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, CH347_RST_Pin|LIN1_WAKE_Pin|LIN1_SLP_Pin|LIN2_WAKE_Pin
+  HAL_GPIO_WritePin(CH347_RST_GPIO_Port, CH347_RST_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOA, LIN1_WAKE_Pin|LIN1_SLP_Pin|LIN2_WAKE_Pin
                           |LIN2_VBAT_EN_Pin|LIN2_MASTER_Pin|CAN2_RES_Pin|CAN1_S_Pin
                           |CAN1_RES_Pin|LIN1_VBAT_EN_Pin, GPIO_PIN_RESET);
 

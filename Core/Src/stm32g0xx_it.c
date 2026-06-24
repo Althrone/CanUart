@@ -342,10 +342,12 @@ typedef enum {
 
 #define BUFFER_SIZE (72*2*2)//canfd最长数据段64字节，帧头8字节，共72字节，留两帧空间
 RxState_t rx_state = RX_STATE_WAIT_HEADER;
-uint32_t can_frame_pos =0;//准备放到can tx fifo的帧的头地址
+uint32_t can1_frame_pos =0;//准备放到can tx fifo的帧的头地址
+uint32_t can2_frame_pos =0;//准备放到can tx fifo的帧的头地址
 extern uint8_t uartRxData[BUFFER_SIZE];
 
-uint8_t can_is_transfering = 0;
+uint8_t can1_is_transfering = 0;
+uint8_t can2_is_transfering = 0;
 
 extern  HAL_StatusTypeDef HAL_FDCAN_AddMessageToTxFifoQ_Raw(FDCAN_HandleTypeDef *hfdcan, uint32_t can_frame_pos, uint8_t frame_len);
 
@@ -373,9 +375,28 @@ uint8_t ParseCanDataLen(uint32_t head_index)
 
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
 {
-  if(huart != &huart4) return;
+  if((huart != &huart4)||(huart != &huart5)) return;
 
-  HAL_UART_RxEventTypeTypeDef rx_event_type = HAL_UARTEx_GetRxEventType(&huart4);
+  DMA_HandleTypeDef* hdma = NULL;
+  FDCAN_HandleTypeDef* hfdcan = NULL;
+  uint8_t* pcan_is_transfering = NULL;
+  uint32_t* pcan_frame_pos = NULL;
+
+  if(huart == &huart4) {
+    hdma = &hdma_usart4_rx;
+    hfdcan = &hfdcan2;
+    pcan_is_transfering = &can2_is_transfering;
+    pcan_frame_pos = &can2_frame_pos;
+  }
+  else if(huart == &huart5) {
+    hdma = &hdma_usart5_rx;
+    hfdcan = &hfdcan1;
+    pcan_is_transfering = &can1_is_transfering;
+    pcan_frame_pos = &can1_frame_pos;
+  }
+
+ #ifdef DEBUG
+  HAL_UART_RxEventTypeTypeDef rx_event_type = HAL_UARTEx_GetRxEventType(huart);
   switch (rx_event_type)
   {
   case HAL_UART_RXEVENT_TC:
@@ -391,31 +412,35 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
   default:
     break;
   }
+ #endif
   
-  if(can_is_transfering) return;
+  if(*pcan_is_transfering) return;
 
   // 1. 获取当前 DMA 写位置和未读数据长度
-  uint32_t dma_cur_pos = BUFFER_SIZE - __HAL_DMA_GET_COUNTER(&hdma_usart4_rx);
-  uint32_t unread = BufferUnsentLen(can_frame_pos, dma_cur_pos);
+  uint32_t dma_cur_pos = BUFFER_SIZE - __HAL_DMA_GET_COUNTER(hdma);
+  uint32_t unread = BufferUnsentLen(*pcan_frame_pos, dma_cur_pos);
 
   // 至少要有帧头（8字节）才能继续
   if (unread < 8) return;
 
   // 2. 解析帧长
-  uint32_t frame_len = ParseCanDataLen(can_frame_pos);
-  uint32_t total_needed = 8 + frame_len;
+  uint32_t frame_len = ParseCanDataLen(*pcan_frame_pos);
+  uint32_t total_needed = 8 + frame_len + ((frame_len%4) ? 4 - frame_len%4 : 0);
 
   // 3. 再次获取最新 DMA 位置（因为刚才解析期间可能又有新数据到达）
-  dma_cur_pos = BUFFER_SIZE - __HAL_DMA_GET_COUNTER(&hdma_usart4_rx);
-  unread = BufferUnsentLen(can_frame_pos, dma_cur_pos);
+  dma_cur_pos = BUFFER_SIZE - __HAL_DMA_GET_COUNTER(hdma);
+  unread = BufferUnsentLen(*pcan_frame_pos, dma_cur_pos);
 
   // 4. 检查是否完整
   if (unread >= total_needed) {
     // 发送帧
-    if (HAL_FDCAN_AddMessageToTxFifoQ_Raw(&hfdcan2, can_frame_pos, frame_len) == HAL_OK) {
-      can_is_transfering = 1;
+    if (HAL_FDCAN_AddMessageToTxFifoQ_Raw(hfdcan, *pcan_frame_pos, frame_len) == HAL_OK) {
+      *pcan_is_transfering = 1;
       // 移动读指针
-      can_frame_pos = (can_frame_pos + total_needed) % BUFFER_SIZE;
+      *pcan_frame_pos = (*pcan_frame_pos + total_needed) % BUFFER_SIZE;
+      // dma_cur_pos = BUFFER_SIZE - __HAL_DMA_GET_COUNTER(hdma);
+      // uint8_t tx_len = BufferUnsentLen(*pcan_frame_pos, dma_cur_pos);;
+      // HAL_UART_Transmit(&huart5,&tx_len,1,1000);
     } else {
         // 发送失败，保留当前帧，不清除 can_is_transfering
         // 可设置一个重试标志，主循环中处理
@@ -440,7 +465,7 @@ void HAL_FDCAN_TxBufferCompleteCallback(FDCAN_HandleTypeDef *hfdcan, uint32_t Bu
 
   // 2. 解析帧长
   uint32_t frame_len = ParseCanDataLen(can_frame_pos);
-  uint32_t total_needed = 8 + frame_len;
+  uint32_t total_needed = 8 + frame_len + ((frame_len%4) ? 4 - frame_len%4 : 0);
 
   // 3. 再次获取最新 DMA 位置（因为刚才解析期间可能又有新数据到达）
   dma_cur_pos = BUFFER_SIZE - __HAL_DMA_GET_COUNTER(&hdma_usart4_rx);
@@ -453,6 +478,9 @@ void HAL_FDCAN_TxBufferCompleteCallback(FDCAN_HandleTypeDef *hfdcan, uint32_t Bu
       can_is_transfering = 1;
       // 移动读指针
       can_frame_pos = (can_frame_pos + total_needed) % BUFFER_SIZE;
+      dma_cur_pos = BUFFER_SIZE - __HAL_DMA_GET_COUNTER(&hdma_usart4_rx);
+      uint8_t tx_len = BufferUnsentLen(can_frame_pos, dma_cur_pos);;
+      HAL_UART_Transmit(&huart5,&tx_len,1,1000);
     } else {
         // 发送失败，保留当前帧，不清除 can_is_transfering
         // 可设置一个重试标志，主循环中处理
