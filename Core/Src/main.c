@@ -72,9 +72,10 @@ static void MX_USART6_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-#define BUFFER_SIZE (72*2*2)//canfd最长数据段64字节，帧头8字节，共72字节，留两帧空间
+#define BUFFER_SIZE (72*2*100)//canfd最长数据段64字节，帧头8字节，共72字节，留两帧空间
 
-uint8_t uartRxData[BUFFER_SIZE];
+uint8_t uart4RxData[BUFFER_SIZE];
+uint8_t uart5RxData[BUFFER_SIZE];
 
 /* USER CODE END 0 */
 
@@ -123,8 +124,12 @@ int main(void)
   HAL_Delay(5000);
 
   __HAL_UART_DISABLE(&huart4);
-  HAL_UARTEx_ReceiveToIdle_DMA(&huart4, uartRxData, BUFFER_SIZE);
+  HAL_UARTEx_ReceiveToIdle_DMA(&huart4, uart4RxData, BUFFER_SIZE);
   __HAL_UART_ENABLE(&huart4);
+
+  __HAL_UART_DISABLE(&huart5);
+  HAL_UARTEx_ReceiveToIdle_DMA(&huart5, uart5RxData, BUFFER_SIZE);
+  __HAL_UART_ENABLE(&huart5);
 
   /* USER CODE END 2 */
 
@@ -797,11 +802,19 @@ HAL_StatusTypeDef HAL_FDCAN_AddMessageToTxFifoQ_Raw(FDCAN_HandleTypeDef *hfdcan,
         return HAL_ERROR;
       }
 
+      uint8_t *pTxData = NULL;
+      if(hfdcan == &hfdcan1) {
+        pTxData = uart5RxData;
+      } 
+      else if(hfdcan == &hfdcan2) {
+        pTxData = uart4RxData;
+      }
+
       // /* Add the message to the Tx FIFO/Queue */
       // FDCAN_CopyMessageToRAM(hfdcan, pTxHeader, pTxData, PutIndex);
       uint8_t mov_cycle = (8+frame_len)/4+((8+frame_len)%4?1:0);
       for(uint8_t i = 0; i < mov_cycle; i++) {
-        *((uint32_t *)(hfdcan->msgRam.TxFIFOQSA+PutIndex*SRAMCAN_TFQ_SIZE)+i) = *(uint32_t *)(&(uartRxData[(can_frame_pos + i*4) % BUFFER_SIZE]));
+        *((uint32_t *)(hfdcan->msgRam.TxFIFOQSA+PutIndex*SRAMCAN_TFQ_SIZE)+i) = *(uint32_t *)(&(pTxData[(can_frame_pos + i*4) % BUFFER_SIZE]));
       }
 
       /* Activate the corresponding transmission request */
