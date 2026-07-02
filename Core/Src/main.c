@@ -119,9 +119,9 @@ int main(void)
   /* USER CODE BEGIN 2 */
 
   //复位CH347
-  HAL_Delay(5000);
+  HAL_Delay(1000);
   HAL_GPIO_WritePin(CH347_RST_GPIO_Port, CH347_RST_Pin, GPIO_PIN_SET);
-  HAL_Delay(5000);
+  HAL_Delay(1000);
 
   __HAL_UART_DISABLE(&huart4);
   HAL_UARTEx_ReceiveToIdle_DMA(&huart4, uart4RxData, BUFFER_SIZE);
@@ -165,7 +165,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = RCC_PLLM_DIV1;
-  RCC_OscInitStruct.PLL.PLLN = 16;
+  RCC_OscInitStruct.PLL.PLLN = 18;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV2;
   RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
@@ -212,12 +212,12 @@ static void MX_FDCAN1_Init(void)
   hfdcan1.Init.ProtocolException = DISABLE;
   hfdcan1.Init.NominalPrescaler = 1;
   hfdcan1.Init.NominalSyncJumpWidth = 1;
-  hfdcan1.Init.NominalTimeSeg1 = 47;
-  hfdcan1.Init.NominalTimeSeg2 = 16;
+  hfdcan1.Init.NominalTimeSeg1 = 53;
+  hfdcan1.Init.NominalTimeSeg2 = 18;
   hfdcan1.Init.DataPrescaler = 1;
   hfdcan1.Init.DataSyncJumpWidth = 1;
-  hfdcan1.Init.DataTimeSeg1 = 11;
-  hfdcan1.Init.DataTimeSeg2 = 4;
+  hfdcan1.Init.DataTimeSeg1 = 12;
+  hfdcan1.Init.DataTimeSeg2 = 5;
   hfdcan1.Init.StdFiltersNbr = 0;
   hfdcan1.Init.ExtFiltersNbr = 0;
   hfdcan1.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
@@ -280,12 +280,12 @@ static void MX_FDCAN2_Init(void)
   hfdcan2.Init.ProtocolException = DISABLE;
   hfdcan2.Init.NominalPrescaler = 1;
   hfdcan2.Init.NominalSyncJumpWidth = 1;
-  hfdcan2.Init.NominalTimeSeg1 = 47;
-  hfdcan2.Init.NominalTimeSeg2 = 16;
+  hfdcan2.Init.NominalTimeSeg1 = 53;
+  hfdcan2.Init.NominalTimeSeg2 = 18;
   hfdcan2.Init.DataPrescaler = 1;
   hfdcan2.Init.DataSyncJumpWidth = 1;
-  hfdcan2.Init.DataTimeSeg1 = 11;
-  hfdcan2.Init.DataTimeSeg2 = 4;
+  hfdcan2.Init.DataTimeSeg1 = 12;
+  hfdcan2.Init.DataTimeSeg2 = 5;
   hfdcan2.Init.StdFiltersNbr = 0;
   hfdcan2.Init.ExtFiltersNbr = 0;
   hfdcan2.Init.TxFifoQueueMode = FDCAN_TX_FIFO_OPERATION;
@@ -388,7 +388,7 @@ static void MX_USART4_UART_Init(void)
 
   /* USER CODE END USART4_Init 1 */
   huart4.Instance = USART4;
-  huart4.Init.BaudRate = 8000000;
+  huart4.Init.BaudRate = 9000000;
   huart4.Init.WordLength = UART_WORDLENGTH_8B;
   huart4.Init.StopBits = UART_STOPBITS_1;
   huart4.Init.Parity = UART_PARITY_NONE;
@@ -424,7 +424,7 @@ static void MX_USART5_UART_Init(void)
 
   /* USER CODE END USART5_Init 1 */
   huart5.Instance = USART5;
-  huart5.Init.BaudRate = 8000000;
+  huart5.Init.BaudRate = 9000000;
   huart5.Init.WordLength = UART_WORDLENGTH_8B;
   huart5.Init.StopBits = UART_STOPBITS_1;
   huart5.Init.Parity = UART_PARITY_NONE;
@@ -693,57 +693,7 @@ HAL_StatusTypeDef HAL_FDCAN_RxMessageDMA(FDCAN_HandleTypeDef *hfdcan, uint32_t R
     }
 
     /* Retrieve DataLength */
-    HAL_UART_Transmit_DMA(&huart4, (uint8_t *)RxAddress, 2*4+DLCtoBytes[((*(RxAddress+1) & FDCAN_ELEMENT_MASK_DLC) >> 16U)] );
-
-    // /* Retrieve IdType */
-    // pRxHeader->IdType = *RxAddress & FDCAN_ELEMENT_MASK_XTD;
-
-    // /* Retrieve Identifier */
-    // if (pRxHeader->IdType == FDCAN_STANDARD_ID) /* Standard ID element */
-    // {
-    //   pRxHeader->Identifier = ((*RxAddress & FDCAN_ELEMENT_MASK_STDID) >> 18U);
-    // }
-    // else /* Extended ID element */
-    // {
-    //   pRxHeader->Identifier = (*RxAddress & FDCAN_ELEMENT_MASK_EXTID);
-    // }
-
-    // /* Retrieve RxFrameType */
-    // pRxHeader->RxFrameType = (*RxAddress & FDCAN_ELEMENT_MASK_RTR);
-
-    // /* Retrieve ErrorStateIndicator */
-    // pRxHeader->ErrorStateIndicator = (*RxAddress & FDCAN_ELEMENT_MASK_ESI);
-
-    // /* Increment RxAddress pointer to second word of Rx FIFO element */
-    // RxAddress++;
-
-    // /* Retrieve RxTimestamp */
-    // pRxHeader->RxTimestamp = (*RxAddress & FDCAN_ELEMENT_MASK_TS);
-
-    // /* Retrieve DataLength */
-    // pRxHeader->DataLength = ((*RxAddress & FDCAN_ELEMENT_MASK_DLC) >> 16U);
-
-    // /* Retrieve BitRateSwitch */
-    // pRxHeader->BitRateSwitch = (*RxAddress & FDCAN_ELEMENT_MASK_BRS);
-
-    // /* Retrieve FDFormat */
-    // pRxHeader->FDFormat = (*RxAddress & FDCAN_ELEMENT_MASK_FDF);
-
-    // /* Retrieve FilterIndex */
-    // pRxHeader->FilterIndex = ((*RxAddress & FDCAN_ELEMENT_MASK_FIDX) >> 24U);
-
-    // /* Retrieve NonMatchingFrame */
-    // pRxHeader->IsFilterMatchingFrame = ((*RxAddress & FDCAN_ELEMENT_MASK_ANMF) >> 31U);
-
-    // /* Increment RxAddress pointer to payload of Rx FIFO element */
-    // RxAddress++;
-
-    // /* Retrieve Rx payload */
-    // pData = (uint8_t *)RxAddress;
-    // for (ByteCounter = 0; ByteCounter < DLCtoBytes[pRxHeader->DataLength]; ByteCounter++)
-    // {
-    //   pRxData[ByteCounter] = pData[ByteCounter];
-    // }
+    HAL_UART_Transmit(&huart4, (uint8_t *)RxAddress, 2*4+DLCtoBytes[((*(RxAddress+1) & FDCAN_ELEMENT_MASK_DLC) >> 16U)],1000);
 
     if (RxLocation == FDCAN_RX_FIFO0) /* Rx element is assigned to the Rx FIFO 0 */
     {

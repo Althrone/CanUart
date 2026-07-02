@@ -264,11 +264,14 @@ void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
   {
     if(RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE)
     {
-      FDCAN_RxHeaderTypeDef RxHeader;
-      uint8_t RxData[8];
-      // HAL_FDCAN_GetRxMessage(&hfdcan2, FDCAN_RX_FIFO0, &RxHeader, RxData);
-      // HAL_UART_Transmit(&huart4, "Hello World!\r\n", 14, 1000);
-      HAL_FDCAN_RxMessageDMA(&hfdcan2, FDCAN_RX_FIFO0);
+      while (HAL_FDCAN_GetRxFifoFillLevel(hfdcan, FDCAN_RX_FIFO0) > 0)
+      {
+        HAL_FDCAN_RxMessageDMA(hfdcan, FDCAN_RX_FIFO0);
+      }
+    }
+    if(RxFifo0ITs & FDCAN_IT_RX_FIFO0_FULL)
+    {
+      while(1);
     }
   }
 }
